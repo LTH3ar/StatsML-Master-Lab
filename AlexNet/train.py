@@ -200,16 +200,18 @@ print('NUM_BATCHES_VAL:', NUM_BATCHES_VAL)
 # Training Loop
 
 # Calculate function for metrics
-from torchmetrics import Precision, Recall, F1Score
+from torchmetrics import Precision, Recall, F1Score, Accuracy
 
 # Initialize metrics
 precision_train = Precision(task='multiclass', num_classes=10).to(device)
 recall_train = Recall(task='multiclass', num_classes=10).to(device)
 f1_train = F1Score(task='multiclass', num_classes=10).to(device)
+accuracy_train = Accuracy(task='multiclass', num_classes=10).to(device)
 
 precision_val = Precision(task='multiclass', num_classes=10).to(device)
 recall_val = Recall(task='multiclass', num_classes=10).to(device)
 f1_val = F1Score(task='multiclass', num_classes=10).to(device)
+accuracy_val = Accuracy(task='multiclass', num_classes=10).to(device)
 
 # Training loop
 best_val_acc = 0.0
