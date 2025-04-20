@@ -84,12 +84,16 @@ class LeNet5(nn.Module):
         transforms.RandomVerticalFlip(p=0.5),    # 50% chance of vertical flip
         transforms.Normalize((0.2860,), (0.3530,))  # mean and std for FashionMNIST
         """
-        # if CIFAR10: # have color so different Normalization but still keep the same color
+        # if CIFAR10: # have color so different Normalization and since there only 1 channel for LeNet5 
         """
         transforms.ToTensor(),
         transforms.RandomHorizontalFlip(p=0.5),  # 50% chance of horizontal flip
         transforms.RandomVerticalFlip(p=0.5),    # 50% chance of vertical flip
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)) 
+        transforms.GrayScale(num_output_channels=1),
+        # next is grascale normalization with 1 channel so only (x, y), (x, y) format
+        transforms.Normalize((0.5,), (0.5,)) # mean and std for CIFAR10
+        # also change broadcast to 1 channel
+
         """
         
         # main
@@ -97,8 +101,8 @@ class LeNet5(nn.Module):
             transform = transforms.Compose([
                 transforms.Pad(2),
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])
             # split train dataset to train and validation dataset
@@ -110,8 +114,8 @@ class LeNet5(nn.Module):
             transform = transforms.Compose([
                 transforms.Pad(2),
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.2860,), (0.3530,))
             ])
             train_size = int(0.8 * len(datasets.FashionMNIST(root='./data', train=True, download=True, transform=transform)))
@@ -121,9 +125,10 @@ class LeNet5(nn.Module):
         elif dataset_name == "CIFAR10":
             transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
-                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
+                transforms.Grayscale(num_output_channels=1),
+                transforms.Normalize((0.5,), (0.5,))
             ])
             train_size = int(0.8 * len(datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)))
             val_size = len(datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)) - train_size

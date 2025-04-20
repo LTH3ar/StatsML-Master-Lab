@@ -70,12 +70,12 @@ num_classes = 10
 precision, recall, f1_score = Custom_Utils.set_metrics(task, num_classes)
 
 # setup logging
-folder_name = "output"
+folder_name = sys.argv[2]
 task_type = "classification"
 writer, log_dir = Custom_Utils.setup_logging(task_type, model_name, folder_name)
 
 # training loop
-num_epochs = 30
+num_epochs = sys.argv[3] if len(sys.argv) > 3 else 10
 train_metrics = (precision, recall, f1_score)
 val_metrics = (precision, recall, f1_score)
 
@@ -85,7 +85,7 @@ recall = recall.to(device)
 f1_score = f1_score.to(device)
 loss_function = loss_function.to(device)
 
-Custom_Utils.training_loop(
+best_model_path = Custom_Utils.training_loop(
     model,
     model_name=model_name, 
     num_epochs=num_epochs, 
@@ -99,3 +99,18 @@ Custom_Utils.training_loop(
     val_metrics=val_metrics,
     log_dir=log_dir
 )
+
+# test
+if model_name == "LeNet-5":
+    init_model = LeNet5.LeNet5(num_classes=10)
+elif model_name == "AlexNet":
+    init_model = AlexNet.AlexNet(num_classes=10)
+elif model_name == "ResNet18":
+    init_model = ResNet18.ResNet18(num_classes=10, pretrained=False)
+
+test_precision, test_recall, test_f1_score = Custom_Utils.set_metrics(task, num_classes)
+test_precision = test_precision.to(device)
+test_recall = test_recall.to(device)
+test_f1_score = test_f1_score.to(device)
+model = Custom_Utils.file2model(init_model, best_model_path).to(device)
+Custom_Utils.test_model(model, test_dataloader, loss_function, (test_precision, test_recall, test_f1_score), device, log_dir)

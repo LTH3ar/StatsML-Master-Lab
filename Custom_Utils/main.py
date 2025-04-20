@@ -54,6 +54,7 @@ def training_loop(
     val_loss_lst = []
     train_accuracy_lst = []
     val_accuracy_lst = []
+    num_epochs = int(num_epochs)
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0.0
@@ -123,9 +124,11 @@ def training_loop(
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             # format: {model_name}_{epoch}_{val_loss:.4f}.pth
-            torch.save(model.state_dict(), os.path.join(log_dir, f'best_model_{model_name}.pth'))
+            torch.save(model.state_dict(), os.path.join(log_dir, f'{model_name}_{epoch+1}_{val_loss:.4f}.pth'))
+            print(f"Model saved at epoch {epoch+1} with validation loss: {val_loss:.4f}")
+            best_model_path = os.path.join(log_dir, f'{model_name}_{epoch+1}_{val_loss:.4f}.pth')
 
-        print(f"Epoch {epoch}/{num_epochs}, "
+        print(f"Epoch {epoch+1}/{num_epochs}, "
               f"Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}, "
               f"Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
 
@@ -136,8 +139,13 @@ def training_loop(
         'train_accuracy': train_accuracy_lst,
         'val_accuracy': val_accuracy_lst
     }, os.path.join(log_dir, 'metrics.pth'))
+    with open(os.path.join(log_dir, 'metrics.txt'), 'w') as f:
+        f.write(f"Train Loss: {train_loss_lst}\n")
+        f.write(f"Validation Loss: {val_loss_lst}\n")
+        f.write(f"Train Accuracy: {train_accuracy_lst}\n")
+        f.write(f"Validation Accuracy: {val_accuracy_lst}\n")
 
-    # Plot and save loss and accuracy curves
+    # Plot and save loss and accuracy curves, turn on grid
     import matplotlib.pyplot as plt
     plt.figure(figsize=(10, 5))
     plt.plot(train_loss_lst, label='Train Loss')
@@ -145,6 +153,7 @@ def training_loop(
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
+    plt.grid()
     plt.savefig(os.path.join(log_dir, 'loss_curve.png'))
     plt.close()
 
@@ -154,5 +163,81 @@ def training_loop(
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
+    plt.grid()
     plt.savefig(os.path.join(log_dir, 'accuracy_curve.png'))
     plt.close()
+
+    # return the path to the best model
+    return best_model_path
+
+import sys
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+def file2model(model, weight_path):
+    if os.path.isfile(weight_path):
+        print(f"Loading model weights from {weight_path}")
+        model.load_state_dict(torch.load(weight_path))
+    else:
+        print(f"Model weights file {weight_path} not found.")
+        sys.exit(1)
+    return model
+
+def test_model(model, test_loader, loss_function, metrics, device, log_dir):
+    model.eval()
+    precision, recall, f1_score = metrics
+    test_loss = 0.0
+    test_correct = 0
+    total_test = 0
+    all_labels = []
+    all_predictions = []
+
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            loss = loss_function(outputs, labels)
+
+            test_loss += loss.item() * inputs.size(0)
+            _, predicted = torch.max(outputs, 1)
+            test_correct += (predicted == labels).sum().item()
+            total_test += labels.size(0)
+
+            all_labels.extend(labels.cpu().numpy())
+            all_predictions.extend(predicted.cpu().numpy())
+
+            precision(outputs, labels)
+            recall(outputs, labels)
+            f1_score(outputs, labels)
+
+    test_loss /= total_test
+    test_accuracy = test_correct / total_test
+
+    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+    print(f"Precision: {precision.compute():.4f}, Recall: {recall.compute():.4f}, F1 Score: {f1_score.compute():.4f}")
+
+    # Confusion Matrix
+    import matplotlib.pyplot as plt
+
+    cm = confusion_matrix(all_labels, all_predictions)
+    print("Confusion Matrix:")
+    print(cm)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title("Confusion Matrix")
+    plt.savefig(os.path.join(log_dir, 'confusion_matrix.png'))
+    plt.show()
+
+    # save all metrics with confusions matrix in a text file
+    with open(os.path.join(log_dir, 'test_metrics.txt'), 'w') as f:
+        f.write(f"Test Loss: {test_loss:.4f}\n")
+        f.write(f"Test Accuracy: {test_accuracy:.4f}\n")
+        f.write(f"Precision: {precision.compute():.4f}\n")
+        f.write(f"Recall: {recall.compute():.4f}\n")
+        f.write(f"F1 Score: {f1_score.compute():.4f}\n")
+        f.write("Confusion Matrix:\n")
+        f.write(str(cm))
+        f.write("\n")
+
+    # Reset metrics
+    precision.reset()
+    recall.reset()
+    f1_score.reset()

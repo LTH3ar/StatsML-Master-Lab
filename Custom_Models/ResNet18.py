@@ -2,6 +2,7 @@ import torch.nn as nn
 from torchvision import datasets
 from torchvision.transforms import transforms
 from torch.utils.data import DataLoader
+import torch
 
 from torchvision import models
 class ResNet18(nn.Module):
@@ -44,9 +45,10 @@ class ResNet18(nn.Module):
             transform = transforms.Compose([
                 transforms.Pad(2),
                 transforms.Resize((224, 224)),  # Resize to 224x224 for AlexNet
+                transforms.Grayscale(num_output_channels=3),  # Convert to 3 channels
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])
             # split train dataset to train and validation dataset
@@ -58,9 +60,10 @@ class ResNet18(nn.Module):
             transform = transforms.Compose([
                 transforms.Pad(2),
                 transforms.Resize((224, 224)),  # Resize to 224x224 for AlexNet
+                transforms.Grayscale(num_output_channels=3),  # Convert to 3 channels
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.2860,), (0.3530,))
             ])
             train_size = int(0.8 * len(datasets.FashionMNIST(root='./data', train=True, download=True, transform=transform)))
@@ -71,8 +74,8 @@ class ResNet18(nn.Module):
             transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Resize((224, 224)),  # Resize to 224x224 for AlexNet
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             ])
             train_size = int(0.8 * len(datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)))

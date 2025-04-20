@@ -101,6 +101,8 @@ class AlexNet(nn.Module):
         transforms.RandomHorizontalFlip(p=0.5),  # 50% chance of horizontal flip
         transforms.RandomVerticalFlip(p=0.5),    # 50% chance of vertical flip
         transforms.Normalize((0.1307,), (0.3081,))  # mean and std for MNIST
+        # add 3 channels
+        transforms.Lambda(lambda x: x.repeat(3, 1, 1))
         """
         # if FashionMNIST:
         """
@@ -122,10 +124,11 @@ class AlexNet(nn.Module):
         if dataset_name == "MNIST":
             transform = transforms.Compose([
                 transforms.Pad(2),
-                transforms.Resize((224, 224)),  # Resize to 224x224 for AlexNet
+                transforms.Resize((227, 227)),  # Resize to 224x224 for AlexNet
+                transforms.Grayscale(num_output_channels=3),  # Convert to 3 channels
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])
             # split train dataset to train and validation dataset
@@ -136,10 +139,11 @@ class AlexNet(nn.Module):
         elif dataset_name == "FashionMNIST":
             transform = transforms.Compose([
                 transforms.Pad(2),
-                transforms.Resize((224, 224)),  # Resize to 224x224 for AlexNet
+                transforms.Resize((227, 227)),  # Resize to 224x224 for AlexNet
+                transforms.Grayscale(num_output_channels=3),  # Convert to 3 channels
                 transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.2860,), (0.3530,))
             ])
             train_size = int(0.8 * len(datasets.FashionMNIST(root='./data', train=True, download=True, transform=transform)))
@@ -149,9 +153,9 @@ class AlexNet(nn.Module):
         elif dataset_name == "CIFAR10":
             transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Resize((224, 224)),  # Resize to 224x224 for AlexNet
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.5),
+                transforms.Resize((227, 227)),  # Resize to 224x224 for AlexNet
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.RandomVerticalFlip(p=0.5),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             ])
             train_size = int(0.8 * len(datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)))
